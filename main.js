@@ -6,7 +6,24 @@ var robot = {
   height: 12,
   direct: 'S'
 }
+var interval
 var timer
+var cleaned = 0
+var obstacle = 0
+
+function calculate() {
+  cleaned = 0
+  obstacle = 0
+  for (var i = 0; i < 500; i++) {
+    for (var j = 0; j < 500; j++) {
+      if (map[i][j] === 1) obstacle++
+      else if (map[i][j] === 2) cleaned++
+    }
+  }
+  document.getElementById('calObstacle').innerText = 'Percent of obstacle:' + obstacle / 2500 + '%'
+  document.getElementById('calCleaned').innerText = 'Percent of cleaned:' + cleaned / 2500 + '%'
+  document.getElementById('time').innerText = 'Time:' + timer + 'min'
+}
 
 function initMap(num, ctx) {
   for (var i = 0; i < 500; i++) {
@@ -32,6 +49,13 @@ function initMap(num, ctx) {
 function renderRobot(ctx) {
   ctx.fillStyle = 'green'
   ctx.fillRect(robot.y, robot.x, robot.width, robot.height)
+  for (var i = robot.x; i < robot.x + 20; i++) {
+    for (var j = robot.y; j < robot.y + 20; j++) {
+      if (map[i]) {
+        if (map[i][j] === 0) map[i][j] = 2
+      }
+    }
+  }
 }
 
 function removeRobot(ctx) {
@@ -44,27 +68,62 @@ function init() {
   var ctx = canvas.getContext('2d')
   canvas.height = canvas.height
   var num = +document.getElementById('obstacle').value
-  var map = initMap(num, ctx)
+  initMap(num, ctx)
   renderRobot(ctx)
 }
 
 function start() {
-  timer = setInterval(function () {randomRun()}, 20)
+  timer = +document.getElementById('timer').value
+  setTimeout(function () {stop()} , timer * 60 * 1000)
+  interval = setInterval(function () {randomRun()}, 17)
+}
+
+function stop() {
+  clearInterval(interval)
+  calculate()
 }
 
 function randomDirect(direct) {
-  if (direct === 'S' || direct === 'N') {
-    if (Math.floor((Math.random() * 2))) {
-      return 'E'
-    } else {
-      return 'W'
-    }
-  } else {
-    if (Math.floor((Math.random() * 2))) {
-      return 'S'
-    } else {
-      return 'N'
-    }
+  var rand = Math.floor((Math.random() * 3))
+  switch (direct) {
+    case 'S':
+      if (rand === 0) {
+        return 'E'
+      } else if (rand === 1) {
+        return 'W'
+      } else {
+        return 'N'
+      }
+      break
+    case 'N':
+      if (rand === 0) {
+        return 'E'
+      } else if (rand === 1) {
+        return 'S'
+      } else {
+        return 'W'
+      }
+      break
+    case 'W':
+      if (rand === 0) {
+        return 'E'
+      } else if (rand === 1) {
+        return 'S'
+      } else {
+        return 'N'
+      }
+      break
+    case 'E':
+      if (rand === 0) {
+        return 'S'
+      } else if (rand === 1) {
+        return 'W'
+      } else {
+        return 'N'
+      }
+      break
+    default:
+      break
   }
 }
 
@@ -75,6 +134,7 @@ function randomRun() {
   switch (robot.direct) {
     case 'S':
       if (robot.x + 1 > 488 || HitJudge(robot.direct)) {
+        console.log(robot.x, robot.y)
         robot.direct = randomDirect('S')
         break
       }
@@ -109,24 +169,29 @@ function randomRun() {
 function HitJudge(direct) {
   switch (direct) {
     case 'S':
-      for (var i = robot.x + 1; i < robot.x + 13; i++) {
-        if (map[i][robot.y] === 1) return true
+      for (var j = robot.y; j < robot.y + robot.width; j++) {
+        if (robot.x + robot.height >= map.length) return true
+        if (map[robot.x + robot.height][j] === 1) return true
       }
       break;
     case 'N':
-      for (var i = robot.x - 1; i < robot.x + 11; i++) {
-        if (map[i][robot.y] === 1) return true
+      for (var j = robot.y; j < robot.y + robot.width; j++) {
+        if (robot.x - 1 <= 0) return true
+        if (map[robot.x - 1][j] === 1) return true
       }
       break
     case 'W':
-      for (var j = robot.y - 1; j < robot.y + 11; j++) {
-        if (map[robot.x][j] === 1) return true
+      for (var i = robot.x; i < robot.x + robot.height; i++) {
+        if (robot.y - 1 <= 0) return true
+        if (map[i][robot.y - 1] === 1) return true
       }
       break
     case 'E':
-      for (var j = robot.y + 1; j < robot.y + 13; j++) {
-        if (map[robot.x][j] === 1) return true
+      for (var i = robot.x; i < robot.x + robot.height; i++) {
+        if (robot.y + robot.width >= map[0].length) return true
+        if (map[i][robot.y + robot.width] === 1) return true
       }
+      break
     default:
       break
   }
