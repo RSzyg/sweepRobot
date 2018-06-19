@@ -10,6 +10,9 @@ var interval
 var timer
 var cleaned = 0
 var obstacle = 0
+var dir = 'SWNE'
+var dx = [1, 0, -1, 0]
+var dy = [0, -1, 0, 1]
 
 function calculate() {
   cleaned = 0
@@ -49,8 +52,8 @@ function initMap(num, ctx) {
 function renderRobot(ctx) {
   ctx.fillStyle = 'green'
   ctx.fillRect(robot.y, robot.x, robot.width, robot.height)
-  for (var i = robot.x; i < robot.x + 20; i++) {
-    for (var j = robot.y; j < robot.y + 20; j++) {
+  for (var i = robot.x; i < robot.x + 12; i++) {
+    for (var j = robot.y; j < robot.y + 12; j++) {
       if (map[i]) {
         if (map[i][j] === 0) map[i][j] = 2
       }
@@ -86,7 +89,7 @@ function stop() {
 function randomDirect(direct) {
   var rand = Math.floor((Math.random() * 3))
   switch (direct) {
-    case 'S':
+    case 0://S
       if (rand === 0) {
         return 'E'
       } else if (rand === 1) {
@@ -95,7 +98,7 @@ function randomDirect(direct) {
         return 'N'
       }
       break
-    case 'N':
+    case 2://N
       if (rand === 0) {
         return 'E'
       } else if (rand === 1) {
@@ -104,7 +107,7 @@ function randomDirect(direct) {
         return 'W'
       }
       break
-    case 'W':
+    case 1://W
       if (rand === 0) {
         return 'E'
       } else if (rand === 1) {
@@ -113,7 +116,7 @@ function randomDirect(direct) {
         return 'N'
       }
       break
-    case 'E':
+    case 3://E
       if (rand === 0) {
         return 'S'
       } else if (rand === 1) {
@@ -131,69 +134,37 @@ function randomRun() {
   var canvas = document.getElementById('main')
   var ctx = canvas.getContext('2d')
   removeRobot(ctx)
-  switch (robot.direct) {
-    case 'S':
-      if (robot.x + 1 > 488 || HitJudge(robot.direct)) {
-        console.log(robot.x, robot.y)
-        robot.direct = randomDirect('S')
+  for (var k = 0; k < 4; k++) {
+    if (dir[k] === robot.direct) {
+      if (HitJudge(robot.x + dx[k], robot.y + dy[k], k)) {
+        robot.direct = randomDirect(k)
         break
       }
-      robot.x++
+      robot.x += dx[k]
+      robot.y += dy[k]
       break
-    case 'N':
-      if (robot.x - 1 < 0 || HitJudge(robot.direct)) {
-        robot.direct = randomDirect('N')
-        break
-      }
-      robot.x--
-      break
-    case 'W':
-      if (robot.y - 1 < 0 || HitJudge(robot.direct)) {
-        robot.direct = randomDirect('W')
-        break
-      }
-      robot.y--
-      break
-    case 'E':
-      if (robot.y + 1 > 488 || HitJudge(robot.direct)) {
-        robot.direct = randomDirect('E')
-        break
-      }
-      robot.y++
-    default:
-      break;
+    }
   }
   renderRobot(ctx)
 }
 
-function HitJudge(direct) {
-  switch (direct) {
-    case 'S':
-      for (var j = robot.y; j < robot.y + robot.width; j++) {
-        if (robot.x + robot.height >= map.length) return true
-        if (map[robot.x + robot.height][j] === 1) return true
-      }
-      break;
-    case 'N':
-      for (var j = robot.y; j < robot.y + robot.width; j++) {
-        if (robot.x - 1 <= 0) return true
-        if (map[robot.x - 1][j] === 1) return true
-      }
-      break
-    case 'W':
-      for (var i = robot.x; i < robot.x + robot.height; i++) {
-        if (robot.y - 1 <= 0) return true
-        if (map[i][robot.y - 1] === 1) return true
-      }
-      break
-    case 'E':
-      for (var i = robot.x; i < robot.x + robot.height; i++) {
-        if (robot.y + robot.width >= map[0].length) return true
-        if (map[i][robot.y + robot.width] === 1) return true
-      }
-      break
-    default:
-      break
+function HitJudge(nx, ny, k) {
+  if (
+    nx + robot.height - 1 >= map.length ||
+    ny + robot.width - 1 >= map[0].length ||
+    nx < 0 ||
+    ny < 0
+  ) return true
+  if (Math.abs(dx[k])) {
+    for (var j = ny; j < ny + robot.width; j++) {
+      if (map[nx + robot.height - 1][j] === 1) return true
+      if (map[nx][j] === 1) return true
+    }
+  } else if (Math.abs(dy[k])) {
+    for (var i = nx; i < nx + robot.height; i++) {
+      if (map[i][ny + robot.width - 1] === 1) return true
+      if (map[i][ny] === 1) return true
+    }
   }
   return false
 }
